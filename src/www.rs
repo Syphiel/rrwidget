@@ -4,8 +4,7 @@ use std::error::Error;
 use std::io::Read;
 
 pub fn get_posts(cache: &mut LruCache<String, Vec<u8>>) -> Result<Vec<Item>, Box<dyn Error>> {
-    // Panic if unable to load config
-    let conf: Config = confy::load("rrwidget", None).unwrap();
+    let conf: Config = confy::load("rrwidget", None)?;
     let token = ureq::post("https://www.reddit.com/api/v1/access_token")
         .set("User-Agent", &conf.agent())
         .set("Authorization", &format!("Basic {}", &conf.creds()))
