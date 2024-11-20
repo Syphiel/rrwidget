@@ -5,7 +5,7 @@ mod structs;
 mod www;
 
 use crate::dbus::setup;
-use crate::structs::Item;
+use crate::structs::{Config, Item};
 use crate::www::get_posts;
 use gtk::prelude::*;
 use gtk::{gio, glib};
@@ -78,6 +78,7 @@ fn buildui(app: &Application) {
 
     glib::spawn_future_local(populate_list(listbox.clone(), new_posts.clone(), reciever));
     glib::spawn_future_local(setup(window.clone(), new_posts.clone()));
+    check_config(&window, app);
 }
 
 async fn populate_list(
@@ -146,4 +147,114 @@ async fn populate_list(
             listbox.append(&bx);
         }
     }
+}
+
+fn check_config(window: &ApplicationWindow, app: &Application) {
+    let conf: Config = confy::load("rrwidget", None).expect("Failed to load config");
+
+    if conf.is_valid() {
+        return
+    }
+
+    let dialog = gtk::Window::builder()
+        .title("Unable to load config")
+        .application(app)
+        .modal(true)
+        .transient_for(window)
+        .build();
+
+    let ok_button = gtk::Button::builder()
+        .label("OK")
+        .hexpand(true)
+        .build();
+
+    let cancel_button = gtk::Button::builder()
+        .label("Cancel")
+        .hexpand(true)
+        .css_classes(vec!["destructive-action"])
+        .build();
+
+    let vbox = gtk::Box::builder()
+        .orientation(gtk::Orientation::Vertical)
+        .build();
+
+    let hbox = gtk::Box::builder()
+        .orientation(gtk::Orientation::Horizontal)
+        .build();
+
+    let label = gtk::Label::builder()
+        .label("Unable to load config, please configure the following fields:")
+        .margin_start(5)
+        .margin_end(5)
+        .margin_top(5)
+        .margin_bottom(5)
+        .build();
+
+    let client_id = gtk::Entry::builder()
+        .placeholder_text("Client ID")
+        .hexpand(true)
+        .margin_start(5)
+        .margin_end(5)
+        .margin_top(5)
+        .build();
+
+    let client_secret = gtk::Entry::builder()
+        .placeholder_text("Client Secret")
+        .hexpand(true)
+        .margin_start(5)
+        .margin_end(5)
+        .build();
+
+    let reddit_user = gtk::Entry::builder()
+        .placeholder_text("Reddit User")
+        .hexpand(true)
+        .margin_start(5)
+        .margin_end(5)
+        .build();
+
+    let reddit_pass = gtk::Entry::builder()
+        .placeholder_text("Reddit Password")
+        .hexpand(true)
+        .margin_start(5)
+        .margin_end(5)
+        .build();
+
+    let subreddit = gtk::Entry::builder()
+        .placeholder_text("Subreddit")
+        .hexpand(true)
+        .margin_start(5)
+        .margin_end(5)
+        .margin_bottom(5)
+        .build();
+
+    vbox.append(&label);
+    vbox.append(&client_id);
+    vbox.append(&client_secret);
+    vbox.append(&reddit_user);
+    vbox.append(&reddit_pass);
+    vbox.append(&subreddit);
+    hbox.append(&ok_button);
+    hbox.append(&cancel_button);
+    vbox.append(&hbox);
+    dialog.set_child(Some(&vbox));
+
+    let dialog_clone = dialog.clone();
+    ok_button.connect_clicked(move |_| {
+        let conf = Config {
+            client_id: client_id.text().to_string(),
+            client_secret: client_secret.text().to_string(),
+            reddit_user: reddit_user.text().to_string(),
+            reddit_pass: reddit_pass.text().to_string(),
+            subreddit: subreddit.text().to_string(),
+        };
+        confy::store("rrwidget", None, conf).expect("Failed to store config");
+        dialog_clone.close();
+    });
+
+    let app = app.clone();
+    cancel_button.connect_clicked(move |_| {
+        app.quit();
+    });
+
+    dialog.present();
 }

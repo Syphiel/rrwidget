@@ -74,6 +74,14 @@ impl Config {
     pub fn agent(&self) -> String {
         format!("linux:rrwidget/0.1 (by /u/{})", self.reddit_user)
     }
+
+    pub fn is_valid(&self) -> bool {
+        !self.client_id.is_empty()
+            && !self.client_secret.is_empty()
+            && !self.reddit_user.is_empty()
+            && !self.reddit_pass.is_empty()
+            && !self.subreddit.is_empty()
+    }
 }
 
 impl RedditPostChildData {

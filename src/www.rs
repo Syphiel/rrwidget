@@ -5,6 +5,9 @@ use std::io::Read;
 
 pub fn get_posts(cache: &mut LruCache<String, Vec<u8>>) -> Result<Vec<Item>, Box<dyn Error>> {
     let conf: Config = confy::load("rrwidget", None)?;
+    if !conf.is_valid() {
+        return Err("Invalid config".into());
+    }
     let token = ureq::post("https://www.reddit.com/api/v1/access_token")
         .set("User-Agent", &conf.agent())
         .set("Authorization", &format!("Basic {}", &conf.creds()))
