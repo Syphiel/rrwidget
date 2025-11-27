@@ -99,16 +99,27 @@ async fn populate_list(
             let image;
             if let Some(image_data) = post.image_data {
                 let image_bytes = glib::Bytes::from_owned(image_data);
-                // TODO: Don't panic on invalid images
-                let paintable = gtk::gdk::Texture::from_bytes(&image_bytes).unwrap();
-                image = gtk::Image::builder()
-                    .paintable(&paintable)
-                    .pixel_size(64)
-                    .margin_top(5)
-                    .margin_bottom(5)
-                    .margin_start(5)
-                    .margin_end(5)
-                    .build();
+                match gtk::gdk::Texture::from_bytes(&image_bytes) {
+                    Ok(paintable) => {
+                        image = gtk::Image::builder()
+                            .paintable(&paintable)
+                            .pixel_size(64)
+                            .margin_top(5)
+                            .margin_bottom(5)
+                            .margin_start(5)
+                            .margin_end(5)
+                            .build();
+                    }
+                    Err(_) => {
+                        image = gtk::Image::builder()
+                            .pixel_size(64)
+                            .margin_top(5)
+                            .margin_bottom(5)
+                            .margin_start(5)
+                            .margin_end(5)
+                            .build();
+                    }
+                }
             } else {
                 image = gtk::Image::builder()
                     .pixel_size(64)
